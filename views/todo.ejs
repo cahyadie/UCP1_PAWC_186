@@ -1,0 +1,121 @@
+<div class="container mt-5">
+    <h1 class="text-center">Daftar Pegawai Kebun</h1>
+
+    <!-- Form untuk Menambah Pegawai -->
+    <form id="addPegawaiForm" class="my-4">
+        <div class="input-group">
+            <input type="text" id="newNama" class="form-control" placeholder="Nama pegawai" required>
+            <input type="text" id="newPosisiKerja" class="form-control" placeholder="Posisi kerja" required>
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-primary">Tambah Pegawai</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Daftar Pegawai -->
+    <ul id="pegawaiList" class="list-group">
+        <% todos.forEach(pegawai => { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <strong><%= pegawai.nama %></strong> - <%= pegawai.posisikerja %>
+                </span>
+                <div>
+                    <button class="btn btn-sm btn-success mr-2 editBtn" data-id="<%= pegawai.id %>">Edit</button>
+                    <button class="btn btn-sm btn-danger deleteBtn" data-id="<%= pegawai.id %>">Hapus</button>
+                </div>
+            </li>
+        <% }); %>
+    </ul>
+
+    <!-- Modal Edit Pegawai -->
+    <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Pegawai</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPegawaiForm">
+                        <div class="form-group">
+                            <label for="editNama">Nama</label>
+                            <input type="text" id="editNama" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPosisiKerja">Posisi Kerja</label>
+                            <input type="text" id="editPosisiKerja" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Tambah pegawai baru
+        $('#addPegawaiForm').on('submit', function (e) {
+            e.preventDefault();
+            const nama = $('#newNama').val().trim();
+            const posisiKerja = $('#newPosisiKerja').val().trim();
+            if (nama && posisiKerja) {
+                $.ajax({
+                    url: '/api/todos',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ nama: nama, posisikerja: posisiKerja }),
+                    success: function () {
+                        location.reload(); // Reload untuk memperbarui daftar pegawai
+                    },
+                    error: function (error) {
+                        console.error("Error menambahkan pegawai:", error.responseText);
+                    }
+                });
+            }
+        });
+
+        // Hapus pegawai
+        $('.deleteBtn').on('click', function () {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/api/todos/' + id,
+                type: 'DELETE',
+                success: function () {
+                    location.reload(); // Reload untuk memperbarui daftar pegawai
+                }
+            });
+        });
+
+        // Tampilkan modal edit dengan data pegawai saat ini
+        let editId;
+        $('.editBtn').on('click', function () {
+            editId = $(this).data('id');
+            const currentNama = $(this).closest('li').find('span strong').text();
+            const currentPosisiKerja = $(this).closest('li').find('span').text().split(' - ')[1].trim();
+            $('#editNama').val(currentNama);
+            $('#editPosisiKerja').val(currentPosisiKerja);
+            $('#editModal').modal('show');
+        });
+
+        // Update pegawai
+        $('#editPegawaiForm').on('submit', function (e) {
+            e.preventDefault();
+            const nama = $('#editNama').val().trim();
+            const posisiKerja = $('#editPosisiKerja').val().trim();
+            if (nama && posisiKerja) {
+                $.ajax({
+                    url: '/api/todos/' + editId,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ nama: nama, posisikerja: posisiKerja }),
+                    success: function () {
+                        location.reload(); // Reload untuk memperbarui daftar pegawai
+                    }
+                });
+            }
+        });
+    });
+</script>
